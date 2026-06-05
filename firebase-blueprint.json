@@ -1,0 +1,108 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account details including role and registration approval status.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique user ID from Firebase Auth or username" },
+        "name": { "type": "string", "description": "Full name of the user" },
+        "email": { "type": "string", "description": "Email address" },
+        "role": { "type": "string", "enum": ["principal", "teacher", "parent"], "description": "Role-based access level" },
+        "status": { "type": "string", "enum": ["approved", "pending"], "description": "Teacher approval status" },
+        "subject": { "type": "string", "description": "Subject taught by the teacher" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "role", "status"]
+    },
+    "Student": {
+      "title": "Student",
+      "description": "Student record managed by teachers.",
+      "type": "object",
+      "properties": {
+        "indexNumber": { "type": "string", "description": "Unique school index number (e.g. STU001)" },
+        "name": { "type": "string", "description": "Full name of the student" },
+        "grade": { "type": "string", "description": "Grade / Class (e.g., Grade 10-A, Grade 11-B)" },
+        "parentName": { "type": "string", "description": "Name of the parent or guardian" },
+        "parentContact": { "type": "string", "description": "Parent contact number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["indexNumber", "name", "grade"]
+    },
+    "Attendance": {
+      "title": "Attendance Record",
+      "description": "Daily attendance record for a student marked by a teacher.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique ID composed of indexNumber and date" },
+        "studentId": { "type": "string", "description": "Student index number" },
+        "studentName": { "type": "string", "description": "Student name for denormalized reference" },
+        "grade": { "type": "string", "description": "Student grade class" },
+        "date": { "type": "string", "description": "Date of attendance in YYYY-MM-DD format" },
+        "status": { "type": "string", "enum": ["present", "absent", "late"], "description": "Attendance status" },
+        "markedBy": { "type": "string", "description": "Name or UID of teacher who marked it" },
+        "markedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "studentId", "studentName", "grade", "date", "status", "markedBy"]
+    },
+    "MarkReport": {
+      "title": "Mark Report",
+      "description": "Student academic mark report retrieved secure by parents.",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string", "description": "Student index number" },
+        "studentName": { "type": "string", "description": "Student name" },
+        "grade": { "type": "string", "description": "Student grade class" },
+        "term": { "type": "string", "description": "Academic term/exam identifier" },
+        "subjects": { "type": "object", "description": "Map of subjects and marked values" },
+        "remarks": { "type": "string", "description": "Teacher remarks" },
+        "total": { "type": "number", "description": "Total marks scored" },
+        "average": { "type": "number", "description": "Average exam percentage" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["studentId", "studentName", "grade", "term", "subjects"]
+    },
+    "LeaveRequest": {
+      "title": "Leave Request",
+      "description": "Leave request submitted by a teacher and approved by the Principal.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique request ID" },
+        "teacherId": { "type": "string", "description": "UID of the requesting teacher" },
+        "teacherName": { "type": "string", "description": "Name of requesting teacher" },
+        "leaveType": { "type": "string", "description": "Type of leave requested" },
+        "startDate": { "type": "string", "description": "Start date in YYYY-MM-DD" },
+        "endDate": { "type": "string", "description": "End date in YYYY-MM-DD" },
+        "reason": { "type": "string", "description": "Detailed explanation of leave" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"], "description": "Request approval state" },
+        "processedBy": { "type": "string", "description": "UID of processing principal" },
+        "processedAt": { "type": "string", "format": "date-time" },
+        "pdfGenerated": { "type": "boolean", "description": "Has PDF been generated automatically" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "teacherId", "teacherName", "leaveType", "startDate", "endDate", "reason", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile with role details and approval states."
+    },
+    "/students/{indexNumber}": {
+      "schema": "Student",
+      "description": "Individual student registers indexed by index number."
+    },
+    "/attendance/{attendanceId}": {
+      "schema": "Attendance",
+      "description": "Daily student attendance details marked by teachers."
+    },
+    "/markReports/{reportId}": {
+      "schema": "MarkReport",
+      "description": "Academic mark sheets for students."
+    },
+    "/leaveRequests/{requestId}": {
+      "schema": "LeaveRequest",
+      "description": "Leave submissions by teachers processed by the Principal."
+    }
+  }
+}

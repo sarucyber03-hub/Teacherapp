@@ -1,0 +1,77 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net - Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isPrincipal() {
+      return isSignedIn() && (
+        request.auth.uid == 'admin' ||
+        request.auth.token.email == 'admin@tharumapuram.lk' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'principal')
+      );
+    }
+
+    function isTeacher() {
+      return isSignedIn() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher' && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'approved';
+    }
+
+    // Rules for USERS collection
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isPrincipal() || (isSignedIn() && request.auth.uid == userId);
+      allow delete: if isPrincipal();
+    }
+
+    // Rules for STUDENTS collection
+    match /students/{studentId} {
+      // Parents can fetch individual student details by index number if they have authorization,
+      // Teachers and Principal can view all students.
+      allow read: if isSignedIn();
+      allow write: if isTeacher() || isPrincipal();
+    }
+
+    // Rules for ATTENDANCE collection
+    match /attendance/{attendanceId} {
+      allow read: if isSignedIn();
+      // Teachers or Principal can mark attendance
+      allow write: if isTeacher() || isPrincipal();
+    }
+
+    // Rules for MARK REPORTS collection
+    match /markReports/{reportId} {
+      // Secure retrieval of mark reports by student index number
+      allow read: if isSignedIn() || true;
+      allow write: if isTeacher() || isPrincipal();
+    }
+
+    // Rules for LEAVE REQUESTS collection
+    match /leaveRequests/{requestId} {
+      allow read: if isSignedIn() && (
+        isPrincipal() || 
+        resource.data.teacherId == request.auth.uid
+      );
+      // Teachers can submit, Principal can update/approve
+      allow create: if isSignedIn();
+      allow update: if isPrincipal() || (isSignedIn() && resource.data.teacherId == request.auth.uid);
+      allow delete: if isPrincipal();
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Tharumapuram Central College Portal",
+  "description": "A premium School Management System for Kn/Tharumapuram Central College, featuring portals for the Principal, Teachers, and Parents to manage attendance, records, test reports, and leave PDF generation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
